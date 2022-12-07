@@ -1,0 +1,107 @@
+extends layout
+
+block content
+    h1 Please login
+    p#responseField
+    form#phonenumberform(role='form')
+        label() Enter phone number with country code: 
+        input#phonenumberinput( placeholder='+18175698900' type='number')
+        button(type="submit" name="Send") Submit
+
+    form#phonecodeform(role='form' style={display:'none'})        
+        label(for='name') Enter message code: 
+        input#phonecodeinput(type='text' placeholder='XXXXXX')
+        button(type="submit" name="Send") Submit
+   
+
+    script.
+        $(document).ready(function(){  
+            console.log('ajax',getCookie('ajaxToken'))
+            if (getCookie('ajaxToken') != null ){
+                $("#phonecodeform").css("display", "block");
+                $("#phonenumberform").css("display", "none");
+
+            } 
+        });  
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for(let i = 0; i <ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+                }
+            }
+            return null;
+            }
+    
+    script.
+        let request;
+
+        const ajaxPostJSON = (url, data) => {
+
+            request = $.ajax({
+                url: url,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                type: "POST",
+                dataType: "json",
+                data: data,
+            })
+            return request;
+
+        }
+
+        $('#phonenumberform').on('submit', function (event) {
+            event.preventDefault();
+            if (request) {
+                request.abort();
+            }
+
+            ajaxPostJSON('/login', { phonenumber: $('#phonenumberinput').val() })
+
+                .done((response, textStatus, jqXHR) => {
+                    console.log("Received response: ", response);
+                    $("#phonecodeform").css("display", "block");
+                    $("#phonenumberform").css("display", "none");
+                    $('#responseField').text(response.text);
+
+                })
+
+                .fail((jqXHR, textStatus, errorThrown) => {
+                    console.error(
+                        "The following error occurred: " +
+                        textStatus, errorThrown
+                    );
+                });
+        })
+
+        $('#phonecodeform').on('submit', function (event) {
+            event.preventDefault();
+            if (request) {
+                request.abort();
+            }
+
+            ajaxPostJSON('/login', { phonecode: $('#phonecodeinput').val() })
+
+                .done((response, textStatus, jqXHR) => {
+                    console.log("Received response: ", response);
+                    $("#phonecodeform").css("display", "block");
+                    $('#responseField').text(response.text);
+                
+                  
+                })
+
+                .fail((jqXHR, textStatus, errorThrown) => {
+                    console.error(
+                        "The following error occurred: " +
+                        textStatus, errorThrown
+                    );
+                });
+        })
